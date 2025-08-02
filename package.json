@@ -1,0 +1,12 @@
+{
+  "name": "xlsx-parser",
+  "version": "1.0.0",
+  "description": "A Node.js program to parse a local XLSX file with multiple sheets.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  }
+}

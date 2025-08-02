@@ -1,0 +1,19 @@
+{
+  "weeks": [
+    {
+      "sessions": [
+        {
+          "exercises":[
+            {
+              "title":"snatch balance",
+              "volume": [
+                "50%2*2",
+                "55%3*1"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
