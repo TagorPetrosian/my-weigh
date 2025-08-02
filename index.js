@@ -1,36 +1,13 @@
+const express = require('express');
 const xlsx = require('xlsx');
 const fs = require('fs');
+const { google } = require('googleapis');
+const path = require('path');
 
-/**
- * Parses an XLSX file and returns its content as a JSON object.
- * Each sheet in the XLSX file becomes a key in the returned object,
- * and its value is an array of objects representing the rows.
- * @param {string} filePath The path to the XLSX file.
- * @returns {Object} An object where keys are sheet names and values are sheet data.
- */
-function parseXLSX(filePath) {
-  try {
-    // Read the file from the provided path.
-    const workbook = xlsx.readFile(filePath);
-    const sheetData = {};
+const app = express();
+const PORT = 3000;
 
-    // Loop through each sheet name in the workbook.
-    workbook.SheetNames.forEach(sheetName => {
-      const sheet = workbook.Sheets[sheetName];
-      // Convert the sheet to a JSON array of objects.
-      // Each object represents a row, with headers as keys.
-      const jsonData = xlsx.utils.sheet_to_json(sheet);
-      sheetData[sheetName] = jsonData;
-    });
-
-    return sheetData;
-  } catch (err) {
-    // If there's an error reading or parsing the file, log it and return null.
-    console.error(`Error processing XLSX file: ${err.message}`);
-    return null;
-  }
-}
-
+// The core transformation logic remains the same.
 function transformRawDataToProgram(rawData, sheetName) {
   const sessions = [];
   // Define the columns that represent a session. This can be made dynamic if needed.
@@ -86,48 +63,90 @@ function transformRawDataToProgram(rawData, sheetName) {
   return { weeks: [week] };
 }
 
+// --- Server Setup ---
 
+// Route to serve the main landing page.
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+// Middleware to parse URL-encoded bodies (as sent by HTML forms)
+app.use(express.urlencoded({ extended: true }));
 
-function main() {
-  // The file path is expected as the third command-line argument.
-  const filePath = process.argv[2];
-
-  if (!filePath) {
-    console.log('Please provide the path to your XLSX file.');
-    console.log('Usage: node index.js <path_to_file.xlsx>');
-    return;
+// Route to handle the form submission
+app.post('/process', async (req, res) => {
+  const { sheetUrl } = req.body;
+  if (!sheetUrl) {
+    return res.status(400).send('Google Sheet URL is required.');
   }
 
-  const data = parseXLSX(filePath);
+  // Extract the Sheet ID from the URL
+  const match = sheetUrl.match(/\/d\/(.+?)\//);
+  if (!match || !match[1]) {
+    return res.status(400).send('Invalid Google Sheet URL format.');
+  }
+  const spreadsheetId = match[1];
 
-  if (data && Object.keys(data).length > 0) {
+  try {
+    // Authenticate with Google using a service account
+    const auth = new google.auth.GoogleAuth({
+      keyFile: 'credentials.json', // The path to your service account key file
+      scopes: ['https://www.googleapis.com/auth/drive.readonly'],
+    });
+
+    // Use the Google Drive API to export the sheet as an XLSX file buffer
+    const drive = google.drive({ version: 'v3', auth });
+    const fileResponse = await drive.files.export({
+      fileId: spreadsheetId,
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    }, { responseType: 'arraybuffer' });
+
+    // Parse the downloaded buffer
+    const workbook = xlsx.read(fileResponse.data, { type: 'buffer' });
+
+    // Process the workbook data just like in the original script
     const allWeeks = [];
-    console.log('Processing all sheets from the workbook...');
-
-    // Iterate over each sheet, treating each one as a week.
-    for (const sheetName in data) {
+    for (const sheetName of workbook.SheetNames) {
       console.log(`- Processing sheet: '${sheetName}'`);
-      const sheetData = data[sheetName];
+      const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
       const programForSheet = transformRawDataToProgram(sheetData, sheetName);
-      // The transform function returns { weeks: [week] }, so we extract the week object.
       if (programForSheet.weeks && programForSheet.weeks.length > 0) {
         allWeeks.push(programForSheet.weeks[0]);
       }
     }
 
-    // Assemble the final program with all the processed weeks.
     const finalProgram = { weeks: allWeeks };
-
-    // Define the output file name and prepare the JSON content.
-    const outputFileName = `prased_pogram.json`;
+    const outputFileName = `parsed_program.json`;
     const jsonContent = JSON.stringify(finalProgram, null, 2);
-
-    // Write the structured JSON to a new file in the main directory.
     fs.writeFileSync(outputFileName, jsonContent, 'utf8');
-    console.log(`\nSuccessfully created combined JSON file: ${outputFileName}`);
-  } else {
-    console.log('No data found in the XLSX file or the file is empty.');
-  }
-}
 
-main();
+    console.log(`\nSuccessfully created combined JSON file: ${outputFileName}`);
+    // Send a success response to the browser
+    res.send(`
+      <h1>Success!</h1>
+      <p>File processed and <code>${outputFileName}</code> has been created.</p>
+      <a href="/download" download="${outputFileName}">Download JSON File</a>
+      <br><br>
+      <a href="/">Parse another</a>
+    `);
+
+  } catch (error) {
+    console.error('Error processing Google Sheet:', error.message);
+    res.status(500).send(`Error processing Google Sheet: ${error.message}. <br><br><strong>Common issues:</strong><br>1. Is the Google Drive API enabled in your Google Cloud project?<br>2. Have you shared the sheet with the service account email?<br>3. Is the <code>credentials.json</code> file in the correct location?`);
+  }
+});
+
+app.get('/download', (req, res) => {
+  const outputFileName = 'parsed_program.json';
+  const filePath = path.join(__dirname, outputFileName);
+
+  res.download(filePath, outputFileName, (err) => {
+    if (err) {
+      console.error(`Error sending file ${outputFileName}:`, err.message);
+    }
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log('Open your browser and navigate to the address to use the application.');
+});
