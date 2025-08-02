@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyWeigh - Program Parser</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f4f4f9; }
+        .container { text-align: center; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        input[type="text"] { width: 400px; padding: 10px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 4px; }
+        input[type="submit"] { padding: 10px 20px; border: none; background-color: #007bff; color: white; border-radius: 4px; cursor: pointer; }
+        input[type="submit"]:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Program Link Parser</h1>
+        <form action="/process" method="POST">
+            <input type="text" name="sheetUrl" placeholder="Enter your Google Sheet link here" required>
+            <br>
+            <input type="submit" value="Parse Program">
+        </form>
+    </div>
+</body>
+</html>
