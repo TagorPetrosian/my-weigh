@@ -1,23 +1,26 @@
 # MyWeigh - A Program Structure Comparison Tool
 
-MyWeigh is a command-line tool designed to compare the structure of two program definition files, `program.json` and `program_structure.json`. This helps in identifying discrepancies or changes in the expected program structure.
+MyWeigh is a command-line tool designed get json xlsx file with specific structure and parse to to a json that an LLM can reason about.
 
 ## How to Run
 
-Currently, MyWeigh is in its early stages of development. To run the comparison, you will need to:
+Currently, MyWeigh is in its early stages of development. To run you will need to:
 
-1.  **Ensure you have the necessary JSON files:** Make sure `program.json` and `program_structure.json` are present in the root directory of the project.
-2.  **Execute the comparison logic:** The core comparison logic is not yet fully implemented as a runnable script. The `todo.md` file indicates the next steps for development.
+  **Ensure you have the necessary xlsx files are present** as weightlifting-tagor.xlsx in the root directory
+
 
 **Future Development:**
 
-The goal is to provide a simple command-line interface to execute the comparison, potentially with options for output format and detailed reporting.
+1. make it work on cloud 
+2. receive a google sheets link as an input
 
-## Current Status
 
-The `todo.md` file outlines the immediate development tasks:
+## Todos
 
-*   `[] compare structure form program.json and program_structure.json`
+some ideas that came along and i want to work on the later
 
-This indicates that the primary comparison functionality is still pending implementation.
+## Branches
+
+cli-tool - current working version will stay as is on this branch
+main - will contain the web app
  
