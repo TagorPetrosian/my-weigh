@@ -115,18 +115,35 @@ app.post('/process', async (req, res) => {
     }
 
     const finalProgram = { weeks: allWeeks };
-    const outputFileName = `prased_pogram.json`;
+    const outputFileName = `parsed_program.json`;
     const jsonContent = JSON.stringify(finalProgram, null, 2);
     fs.writeFileSync(outputFileName, jsonContent, 'utf8');
 
     console.log(`\nSuccessfully created combined JSON file: ${outputFileName}`);
     // Send a success response to the browser
-    res.send(`<h1>Success!</h1><p>File processed and <code>${outputFileName}</code> has been created.</p><a href="/">Parse another</a>`);
+    res.send(`
+      <h1>Success!</h1>
+      <p>File processed and <code>${outputFileName}</code> has been created.</p>
+      <a href="/download" download="${outputFileName}">Download JSON File</a>
+      <br><br>
+      <a href="/">Parse another</a>
+    `);
 
   } catch (error) {
     console.error('Error processing Google Sheet:', error.message);
     res.status(500).send(`Error processing Google Sheet: ${error.message}. <br><br><strong>Common issues:</strong><br>1. Is the Google Drive API enabled in your Google Cloud project?<br>2. Have you shared the sheet with the service account email?<br>3. Is the <code>credentials.json</code> file in the correct location?`);
   }
+});
+
+app.get('/download', (req, res) => {
+  const outputFileName = 'parsed_program.json';
+  const filePath = path.join(__dirname, outputFileName);
+
+  res.download(filePath, outputFileName, (err) => {
+    if (err) {
+      console.error(`Error sending file ${outputFileName}:`, err.message);
+    }
+  });
 });
 
 app.listen(PORT, () => {
