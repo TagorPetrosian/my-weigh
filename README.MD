@@ -15,9 +15,6 @@ Currently, MyWeigh is in its early stages of development. To run you will need t
 2. receive a google sheets link as an input
 
 
-## Todos
-
-some ideas that came along and i want to work on the later
 
 ## Branches
 
